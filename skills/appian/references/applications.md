@@ -64,4 +64,4 @@ The prefix propagates to all objects in the application:
 - Process models: `CM Create Case`, `CM Reassign Case`
 - Constants: `CM_ADMIN_GROUP`, `CM_STATUS_OPEN`
 - Groups: `CM Administrators`, `CM Case Managers`
-- Sites: `CM Site` (internal), `Case Management` (display name)
+- Sites: `CM Case Management` (object name), `Case Management` (display name)

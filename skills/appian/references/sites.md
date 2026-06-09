@@ -23,7 +23,7 @@ appian sites delete <uuid>
 
 ```json
 {
-  "name": "CM Site",
+  "name": "CM Case Management",
   "displayName": "Case Management",
   "webAddressIdentifier": "case-management",
   "description": "Case management application site",
@@ -38,7 +38,7 @@ appian sites delete <uuid>
 ## Naming Conventions
 
 Three name-related fields:
-- `name` — internal, for Appian Designer: `PREFIX Site` (e.g., `CM Site`)
+- `name` — internal object name in Appian Designer: `PREFIX DisplayName` (e.g., `CM Case Management`, `CM Employee Management`)
 - `displayName` — user-facing, navigation menu: `Case Management`
 - `webAddressIdentifier` — URL slug: `case-management` (produces `/sites/case-management`)
 
