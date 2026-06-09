@@ -33,6 +33,9 @@ appian rt views list <uuid>
 # List actions
 appian rt actions list <uuid>
 
+# Add a record action
+echo '{"displayName":"Create New Employee","processModelUuid":"<pm-uuid>","actionType":"LIST_ACTION","key":"createEmployee"}' | appian rt actions add <rt-uuid>
+
 # List user filters
 appian rt filters list <uuid>
 ```
