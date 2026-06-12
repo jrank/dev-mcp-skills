@@ -50,6 +50,15 @@ echo '{"displayName":"Create New Employee","processModelUuid":"<pm-uuid>","actio
 
 # List user filters
 appian rt filters list <uuid>
+
+# Add a user filter
+echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"<field-uuid>"}' | appian rt filters add <rt-uuid>
+
+# Update a user filter
+echo '{"name":"Updated Name"}' | appian rt filters update <rt-uuid> <filter-uuid>
+
+# Delete a user filter
+appian rt filters delete <rt-uuid> <filter-uuid>
 ```
 
 ## Create JSON Schema
@@ -169,6 +178,20 @@ echo '{"fieldName":"priority","fieldType":"INTEGER"}' | appian rt fields add $RT
 # Update RT metadata
 appian rt get $UUID | jq '.description = "New desc"' | appian rt update $UUID
 ```
+
+## User Filters
+
+User filters let end users filter the record list via dropdowns or date pickers. Three types: `LIST_OF_VALUES`, `DATE_RANGE`, `EXPRESSION`.
+
+```bash
+# Add a filter
+echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"<field-uuid>"}' | appian rt filters add <rt-uuid>
+
+# List existing filters
+appian rt filters list <rt-uuid>
+```
+
+Add filters after record type fields and relationships exist (step 10 in dependency order). Load `references/record-type-user-filters.md` for full schemas, EXPRESSION filter examples, related record filtering, and design guidance.
 
 ## Common Pitfalls
 

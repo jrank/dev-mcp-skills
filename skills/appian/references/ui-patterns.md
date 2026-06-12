@@ -49,6 +49,7 @@ The main grid shows the user's active work:
 - Enable search and refresh
 - Set a reasonable page size (10-20 rows)
 - Include an "empty state" message when no records match
+- For record-backed grids where users need to filter by status, date, category, etc., configure user filters on the record type itself — not in the interface SAIL. See `references/record-type-user-filters.md`.
 
 ### Navigation Pattern
 

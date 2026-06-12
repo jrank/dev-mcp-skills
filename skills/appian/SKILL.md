@@ -109,6 +109,7 @@ Each resource has a dedicated reference file with full CLI examples, JSON schema
 |---|---|
 | Create/manage applications | `references/applications.md` |
 | Record types, fields, relationships, views, actions, filters | `references/record-types.md` |
+| Record type user filters (LIST_OF_VALUES, DATE_RANGE, EXPRESSION) | `references/record-type-user-filters.md` |
 | Interfaces, inputs, SAIL expressions | `references/interfaces.md` |
 | Expression rules, rule inputs | `references/expression-rules.md` |
 | Process models, nodes, variables, start forms | `references/process-models.md` |

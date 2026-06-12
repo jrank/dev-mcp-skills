@@ -69,6 +69,7 @@ When a change involves multiple object types, create them in this order so that 
 - Groups and constants must exist before visibility expressions or security configurations that reference them
 - Process model folders must exist before process models can be created in them
 - The interface must exist before a process model references it as a start form or User Input Task
+- When requirements mention "filtering", "search and filter", or "filterable record list", plan user filters on the record type — add them after fields and relationships exist (see `references/record-type-user-filters.md`)
 
 ## Application Inventory Management
 
