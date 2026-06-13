@@ -5,7 +5,7 @@ description: "Build and modify Appian applications using the Appian CLI. Covers 
 
 ## The Appian CLI
 
-All Appian platform operations use the `appian` CLI. The binary is at `scripts/appian` (bundled with this skill).
+All Appian platform operations use the `appian` CLI. The binary is at `.claude/skills/appian/scripts/appian` (relative to project root).
 
 ### Command Structure
 
