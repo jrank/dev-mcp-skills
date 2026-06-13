@@ -123,6 +123,7 @@ Each resource has a dedicated reference file with full CLI examples, JSON schema
 | Validating or testing completed changes | `references/change-review.md` |
 | Choosing field types or need type constraints (length, precision) | `references/field-types.md` |
 | Configuring process model nodes (smart services, gateways, events) | `references/node-types.md` |
+| Configuring record events, writing events in process models, displaying event history in interfaces, or enabling process mining (Process HQ). Requirements mention: auditing, activity log, event history, tracking changes, collaboration on records, process mining. | `references/record-events.md` |
 | Building a dashboard, form layout, or summary view | `references/ui-patterns.md` |
 | Need to look up a specific SAIL component's parameters | `references/component-reference.md` |
 
