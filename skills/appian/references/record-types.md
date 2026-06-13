@@ -45,8 +45,17 @@ appian rt views list <uuid>
 # List actions
 appian rt actions list <uuid>
 
-# Add a record action
-echo '{"displayName":"Create New Employee","processModelUuid":"<pm-uuid>","actionType":"LIST_ACTION","key":"createEmployee"}' | appian rt actions add <rt-uuid>
+# Add a record action (LIST_ACTION — appears on the record list)
+echo '{"displayName":"Create Submission","processModelUuid":"<pm-uuid>","actionType":"LIST_ACTION","key":"createSubmission"}' | appian rt actions add <rt-uuid>
+
+# Add a record action (RELATED_ACTION — appears on a record view row)
+echo '{"displayName":"Edit Submission","processModelUuid":"<pm-uuid>","actionType":"RELATED_ACTION","key":"editSubmission","contextExpr":"=a!toJson(rv!record)","visibilityExpr":"=loggedInUser() = rv!record['"'"'recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername'"'"']"}' | appian rt actions add <rt-uuid>
+
+# Update an action
+appian rt actions update <rt-uuid> <action-uuid> --file /tmp/action-update.json
+
+# Delete an action
+appian rt actions delete <rt-uuid> <action-uuid>
 
 # List user filters
 appian rt filters list <uuid>
@@ -178,6 +187,121 @@ echo '{"fieldName":"priority","fieldType":"INTEGER"}' | appian rt fields add $RT
 # Update RT metadata
 appian rt get $UUID | jq '.description = "New desc"' | appian rt update $UUID
 ```
+
+## Record Actions
+
+Record actions are process-model-backed operations surfaced in the record list (LIST_ACTION) or on individual record rows (RELATED_ACTION).
+
+### JSON Schema
+
+```json
+{
+  "displayName": "Edit Submission",
+  "processModelUuid": "<pm-uuid>",
+  "actionType": "RELATED_ACTION",
+  "key": "editSubmission",
+  "visibilityExpr": "=loggedInUser() = rv!record['recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername']",
+  "contextExpr": "={record: rv!record}",
+  "icon": "f044",
+  "dialogWidth": "MEDIUM_PLUS"
+}
+```
+
+| Field | Required | Description |
+|---|---|---|
+| `displayName` | Yes | Label shown to users |
+| `processModelUuid` | Yes | Process model to launch |
+| `actionType` | Yes | `LIST_ACTION` (record list button) or `RELATED_ACTION` (per-row action) |
+| `key` | Yes | Unique key for SAIL references (e.g., `recordType!Case.actions.editCase`) |
+| `visibilityExpr` | No | SAIL expression → `true` shows the action, `false` hides it. Default: `=true()` (visible to all). Uses `rv!record` for field access. |
+| `contextExpr` | No | SAIL expression passing record data to the process model. RELATED_ACTION only. Keys map to process parameter names. |
+| `icon` | No | Font Awesome hex code (e.g., `f044` = pencil, `f1f8` = trash, `f067` = plus) |
+| `dialogWidth` | No | `NARROW`, `MEDIUM`, `MEDIUM_PLUS` (default), `WIDE`, `EXTRA_WIDE`, `FIT` |
+| `dialogHeight` | No | `AUTO` (default), `FIT`, `SHORT`, `MEDIUM`, `TALL`, `EXTRA_TALL` |
+
+### Action Types
+
+| Type | Where it appears | `rv!record` available | Typical use |
+|---|---|---|---|
+| `LIST_ACTION` | Button on the record list header | No | Create new records |
+| `RELATED_ACTION` | Per-row action on record views/grids | Yes | Edit, delete, status transitions |
+
+### Visibility Expressions
+
+Control who sees the action. Omitting `visibilityExpr` or setting `"=true()"` makes the action visible to all users.
+
+**Owner-only (record owner can edit):**
+```
+"visibilityExpr": "=loggedInUser() = rv!record['recordType!{rt-uuid}Entity.fields.{fid}createdByUsername']"
+```
+
+**Group-restricted (only admins):**
+```
+"visibilityExpr": "=a!isUserMemberOfGroup(loggedInUser(), cons!MY_ADMIN_GROUP)"
+```
+
+**Status-conditional (only when open):**
+```
+"visibilityExpr": "=rv!record['recordType!{rt-uuid}Case.fields.{fid}status'] = \"Open\""
+```
+
+**Combined (owner AND open status):**
+```
+"visibilityExpr": "=and(loggedInUser() = rv!record['recordType!{rt-uuid}Case.fields.{fid}assignedTo'], rv!record['recordType!{rt-uuid}Case.fields.{fid}status'] = \"Open\")"
+```
+
+### Context Expressions
+
+For RELATED_ACTION, `contextExpr` passes the record into the process model. The keys in the dictionary must match process parameter names (case-sensitive):
+
+```
+"contextExpr": "={record: rv!record}"
+```
+
+The process model needs a parameter named `record` typed to the record type's `typeReference`.
+
+### Examples
+
+```bash
+# LIST_ACTION — create new (no visibility restriction needed)
+echo '{
+  "displayName": "New Submission",
+  "processModelUuid": "'$CREATE_PM_UUID'",
+  "actionType": "LIST_ACTION",
+  "key": "createSubmission",
+  "icon": "f067"
+}' | appian rt actions add $RT_UUID
+
+# RELATED_ACTION — edit, restricted to record owner
+echo '{
+  "displayName": "Edit Submission",
+  "processModelUuid": "'$UPDATE_PM_UUID'",
+  "actionType": "RELATED_ACTION",
+  "key": "editSubmission",
+  "contextExpr": "={record: rv!record}",
+  "visibilityExpr": "=loggedInUser() = rv!record['"'"'recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername'"'"']",
+  "icon": "f044"
+}' | appian rt actions add $RT_UUID
+
+# RELATED_ACTION — delete, restricted to admins
+echo '{
+  "displayName": "Delete",
+  "processModelUuid": "'$DELETE_PM_UUID'",
+  "actionType": "RELATED_ACTION",
+  "key": "deleteSubmission",
+  "visibilityExpr": "=a!isUserMemberOfGroup(loggedInUser(), cons!MY_ADMIN_GROUP)",
+  "icon": "f1f8"
+}' | appian rt actions add $RT_UUID
+```
+
+### Design Guidance
+
+- **LIST_ACTION** (create new): typically no visibility restriction — any user who can see the record list can create
+- **RELATED_ACTION** (edit/update): restrict to record owner via `visibilityExpr` comparing `loggedInUser()` to the owner/submitter field
+- **RELATED_ACTION** (delete): restrict to admins or record owner
+- Always set `contextExpr` on RELATED_ACTION to pass the record into the process model
+- Use heredoc (`cat << 'EOF'`) for complex visibility expressions to avoid shell escaping issues
+- The `key` must be unique within the record type and is used in SAIL references
 
 ## User Filters
 
