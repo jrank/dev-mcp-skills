@@ -105,26 +105,26 @@ Auth is configured in `~/.appian/config.yaml`. The CLI handles credentials autom
 
 Each resource has a dedicated reference file with full CLI examples, JSON schemas, design conventions, and pitfalls. Load the relevant reference for your task:
 
-| Task | Reference File |
+| When to load | Reference File |
 |---|---|
-| Create/manage applications | `references/applications.md` |
-| Record types, fields, relationships, views, actions, filters | `references/record-types.md` |
-| Record type user filters (LIST_OF_VALUES, DATE_RANGE, EXPRESSION) | `references/record-type-user-filters.md` |
-| Interfaces, inputs, SAIL expressions | `references/interfaces.md` |
-| Expression rules, rule inputs | `references/expression-rules.md` |
-| Process models, nodes, variables, start forms | `references/process-models.md` |
-| Sites, pages, navigation | `references/sites.md` |
-| Constants, groups, folders, documents | `references/supporting-objects.md` |
-| Data modeling (entity design, normalization, relationships) | `references/data-modeling.md` |
-| SAIL syntax (components, layouts, patterns) | `references/sail.md` |
-| Appian expressions (functions, operators, types) | `references/expressions.md` |
-| Security (roles, RLS, group hierarchy) | `references/security.md` |
-| Planning changes (discovery, dependency order, scoping) | `references/change-planning.md` |
-| Reviewing changes (validation, testing) | `references/change-review.md` |
-| Record type field types (complete type reference) | `references/field-types.md` |
-| Process model node types (schema IDs, configs) | `references/node-types.md` |
-| UI patterns (dashboard, form, summary layouts) | `references/ui-patterns.md` |
-| SAIL component reference (index of all components) | `references/component-reference.md` |
+| Creating or managing an application | `references/applications.md` |
+| Creating/modifying record types, fields, relationships, views, or actions | `references/record-types.md` |
+| Requirements mention filtering, searching, faceted navigation, or record list dropdowns | `references/record-type-user-filters.md` |
+| Creating/modifying interfaces or writing SAIL form expressions | `references/interfaces.md` |
+| Creating/modifying expression rules | `references/expression-rules.md` |
+| Creating/modifying process models, adding nodes, or wiring start forms | `references/process-models.md` |
+| Creating/modifying sites or adding pages | `references/sites.md` |
+| Creating constants, groups, folders, or documents | `references/supporting-objects.md` |
+| Designing a data model, choosing entity structure, or normalizing fields into lookup tables | `references/data-modeling.md` |
+| Writing SAIL expressions for interfaces (layout, components, patterns) | `references/sail.md` |
+| Using Appian functions, operators, or type conversions in expressions | `references/expressions.md` |
+| Configuring security roles, record-level security, or group hierarchy | `references/security.md` |
+| Starting a multi-object task — need to plan dependency order and scope | `references/change-planning.md` |
+| Validating or testing completed changes | `references/change-review.md` |
+| Choosing field types or need type constraints (length, precision) | `references/field-types.md` |
+| Configuring process model nodes (smart services, gateways, events) | `references/node-types.md` |
+| Building a dashboard, form layout, or summary view | `references/ui-patterns.md` |
+| Need to look up a specific SAIL component's parameters | `references/component-reference.md` |
 
 ### Loading Strategy
 
