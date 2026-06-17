@@ -1,161 +1,91 @@
 # Appian MCP Tool Reference
 
-## Overview
+## Discovery
 
-Appian platform operations are available as MCP tools. The tools are discovered automatically via the configured MCP server. Tool names follow a pattern like `mcp__appian__<toolName>` (the exact prefix depends on the server configuration — look for characteristic tool names like `createApplication`, `createRecordType`, `listInterfaces`, `getProcessModel` regardless of prefix).
+Appian platform operations are available as MCP tools. The tools are self-describing — inspect their parameter schemas directly for field names, types, and descriptions.
 
-## Available Tools
+Tool names follow a pattern like `mcp__appian__<toolName>` (the exact prefix depends on server configuration). Look for characteristic tool names like `createApplication`, `createRecordType`, `listInterfaces`, `getProcessModel` regardless of prefix.
 
-Tools are organized by resource type. Each accepts JSON parameters directly (no bash, no piping).
+This reference covers patterns, conventions, and non-obvious behaviors that tool schemas don't communicate well.
 
-### Applications
-- `createApplication` — Create a new application
-- `getApplication` — Get application details by UUID
-- `listApplications` — List applications with optional filtering
-- `deleteApplication` — Delete an application
-- `listApplicationObjects` — List all objects in an application
-- `addObjectsToApplication` — Associate existing objects with an application
+## Key Behaviors
 
-### Record Types
-- `createRecordType` — Create a record type with fields
-- `getRecordType` — Get record type details (fields, relationships, typeReference)
-- `listRecordTypes` — List record types in an application
-- `updateRecordType` — Update record type properties
-- `deleteRecordType` — Delete a record type
-- `addRecordTypeField` — Add a field to a record type
-- `listRecordTypeFields` — List fields on a record type
-- `updateRecordTypeField` — Update a field
-- `deleteRecordTypeField` — Delete a field
-- `addRecordTypeRelationship` — Add a relationship between record types
-- `listRecordTypeRelationships` — List relationships
-- `updateRecordTypeRelationship` — Update a relationship
-- `deleteRecordTypeRelationship` — Delete a relationship
-- `addRecordTypeView` — Add a view/tab to a record type
-- `updateRecordTypeView` — Update a view
-- `deleteRecordTypeView` — Delete a view
-- `listRecordTypeViews` — List views
-- `addRecordTypeAction` — Add a record action (LIST_ACTION or RELATED_ACTION)
-- `updateRecordTypeAction` — Update a record action
-- `deleteRecordTypeAction` — Delete a record action
-- `listRecordTypeActions` — List record actions
-- `addRecordTypeUserFilter` — Add a user filter
-- `updateRecordTypeUserFilter` — Update a user filter
-- `deleteRecordTypeUserFilter` — Delete a user filter
-- `listRecordTypeUserFilters` — List user filters
-- `configureRecordEvents` — Configure record events (audit history)
-- `getRecordEventsConfig` — Get record events configuration
-- `insertRecordData` — Insert data rows (CSV format)
-- `updateRecordData` — Update data rows by primary key (CSV format)
-- `deleteRecordData` — Delete data rows by primary key (CSV format)
-- `listRecordData` — List record data
+### Updates are partial replacement
+Most update tools accept only the fields you want to change — omitted fields are preserved. However, **array fields are full replacement**: if you provide `nodes` on `updateProcessModel`, you must include ALL nodes (not just new ones). Same for `pages` on `updateSite`, `inputs` on `updateInterface`, and `processVariables` on `updateProcessModel`.
 
-### Interfaces
-- `createInterface` — Create an interface with SAIL expression
-- `getInterface` — Get interface details
-- `listInterfaces` — List interfaces in an application
-- `updateInterface` — Update interface expression or inputs
-- `deleteInterface` — Delete an interface
-- `testInterface` — Evaluate an interface and check for runtime errors
+### SAIL expressions are strings
+Pass SAIL expressions as plain string values. No special escaping beyond normal JSON string escaping. The `expression` field on interfaces and expression rules must start with `=`.
 
-### Expression Rules
-- `createExpressionRule` — Create an expression rule
-- `getExpressionRule` — Get expression rule details
-- `listExpressionRules` — List expression rules
-- `updateExpressionRule` — Update expression or inputs
-- `deleteExpressionRule` — Delete an expression rule
-- `testRule` — Execute a rule with test inputs
+### CSV format for record data
+`insertRecordData`, `updateRecordData`, and `deleteRecordData` all use CSV format (header row + data rows), not JSON arrays. Boolean values must be `1`/`0` (not `true`/`false`). Dates use `YYYY-MM-DD`, datetimes use `YYYY-MM-DD HH:MM:SS`.
 
-### Process Models
-- `createProcessModel` — Create a process model
-- `getProcessModel` — Get process model details
-- `listProcessModels` — List process models
-- `updateProcessModel` — Update nodes, variables, start form
-- `deleteProcessModel` — Delete a process model
-- `createProcessModelNode` — Add a node
-- `updateProcessModelNode` — Update a node
-- `deleteProcessModelNode` — Delete a node
-- `listProcessModelNodes` — List nodes in a process model
-- `getProcessModelNode` — Get a single node with full config
-- `listProcessModelNodeTypes` — List available node types
-- `getProcessModelNodeTypeSchema` — Get input/output schema for a node type
-- `testProcessModel` — Run an unattended process model
+### UUIDs are always in responses
+Every create tool returns the new object's `uuid` directly in the response. No special output formatting needed — just read it from the JSON response.
 
-### Sites
-- `createSite` — Create a site with pages
-- `getSite` — Get site details
-- `listSites` — List sites
-- `updateSite` — Update site pages or properties
-- `deleteSite` — Delete a site
+## Multi-Step Patterns
 
-### Supporting Objects
-- `createConstant` — Create a constant
-- `getConstant` — Get a constant
-- `listConstants` — List constants
-- `updateConstant` — Update a constant
-- `deleteConstant` — Delete a constant
-- `createGroup` — Create a group
-- `getGroup` — Get a group
-- `listGroups` — List groups
-- `updateGroup` — Update a group
-- `deleteGroup` — Delete a group
-- `addGroupMembers` — Add members to a group
-- `removeGroupMember` — Remove a member from a group
-- `listGroupMembers` — List group members
-- `createFolder` — Create a folder
-- `getFolder` — Get a folder
-- `listFolders` — List folders
-- `listFolderContents` — List folder contents
-- `updateFolder` — Update a folder
-- `deleteFolder` — Delete a folder
-- `uploadDocument` — Upload a document
-- `getDocument` — Get document metadata
-- `listDocuments` — List documents
-- `getDocumentText` — Get extracted text content
-- `replaceDocumentContent` — Replace document content
-- `deleteDocument` — Delete a document
+### Record type creation sequence
+A complete record type setup spans multiple calls:
+1. `createRecordType` (with fields) → get UUID and field UUIDs from response
+2. `addRecordTypeRelationship` (after ALL related record types exist)
+3. `addRecordTypeView` (needs interface UUIDs)
+4. `addRecordTypeAction` (needs process model UUIDs)
+5. `addRecordTypeUserFilter` (needs field UUIDs)
 
-### Web APIs
-- `createWebApi` — Create a Web API
-- `getWebApi` — Get Web API details
-- `listWebApis` — List Web APIs
-- `updateWebApi` — Update a Web API
-- `deleteWebApi` — Delete a Web API
+### Connected system configuration loop
+Connected systems use an iterative pattern:
+1. `createConnectedSystem` → response includes `schema` (available properties) and `properties` (current values, mostly null)
+2. Read the schema to see what fields are available
+3. `updateConnectedSystem` with the fields you want to set
+4. If you changed a discriminator field (e.g., `authType`), the schema changes — repeat from step 2
 
-### Security
-- `getObjectSecurity` — Get security role map for any object
-- `updateObjectSecurity` — Set security role map
+### Process model node type discovery
+Before configuring unfamiliar node types:
+1. `getProcessModelNodeTypeSchema` with the type ID (e.g., `"internal3.write_records_to_source_23r3"`)
+2. Use `referenceUuid` parameter to enrich schema with context from a referenced object (integration inputs, subprocess PVs)
+3. Use `formInterfaceUuid` for attended nodes to discover form input mappings
 
-### Validation
-- `validateDesignObject` — Validate all expressions on a design object
-- `validateExpression` — Validate a raw SAIL expression
+### Integration configuration loop
+Same iterative pattern as connected systems:
+1. `createIntegration` → response includes `schema` and `properties`
+2. Read schema, set properties via `updateIntegration`
+3. Repeat — schema may change based on operation or discriminator values
+4. Properties marked `isExpressionable=true` accept SAIL expressions; for literal strings, wrap in quotes: `'"my value"'`
 
-## Key Characteristics
+## Non-Obvious Behaviors
 
-- Parameters are passed directly as JSON arguments — no shell, no piping
-- Tool responses are always structured JSON with `uuid`, `name`, etc.
-- Errors come back as structured JSON with `error` field
-- SAIL expressions are passed as string values in parameters — no special escaping beyond JSON string escaping
-- CSV format for record data operations (insertRecordData, updateRecordData, deleteRecordData)
-- No need to `cd` anywhere — tools work from any context
-- UUIDs are always in the JSON response directly
-- Tools are self-describing — inspect their parameter schemas for exact field names and types
+### Process model requirements
+- `parentFolderUuid` must be a **process model folder** (from `listProcessModelFolders`), not a regular folder
+- `errorAlertGroupName` is required on create — use the app's administrators group name
+- Start forms use `inputMap` where keys = PV names (without `pv!`), values = interface input names (without `ri!`)
 
-## Common Patterns
+### Record type relationships
+- Must declare both sides: MANY_TO_ONE on the FK table AND ONE_TO_MANY on the referenced table
+- Both record types must exist before either relationship can be added
+- `sourceRecordTypeFieldUuid` and `targetRecordTypeFieldUuid` must be real field UUIDs from create/get responses — never fabricate them
 
-### Capture UUID from creation
-The response from any create tool includes `uuid` directly — just reference it in subsequent calls.
+### Record actions
+- `contextExpr` keys must match process model parameter names (case-sensitive)
+- `icon` is a Font Awesome hex code (e.g., `"f044"`), not a name (not `"pencil"`)
+- RELATED_ACTIONs only surface on record views, not on custom `a!gridField` grids
 
-### SAIL expressions
-Pass as the `expression` parameter string value. No special escaping needed beyond normal JSON string escaping.
+### Record events
+- `configureRecordEvents` returns 409 if already configured — check with `getRecordEventsConfig` first
+- Event types are managed after setup by inserting/updating records in the Event Type Lookup record type (UUID from config response)
+- Events can only be written via Write Records node in process models — not via `a!writeRecords()`
 
-### List before create
-Always call the list tool first to discover what already exists before creating new objects.
+### testInterface and testRule
+- `testInterface` renders the interface and returns the component tree + any `diagnostics.error` entries
+- Use it to catch runtime errors that expression validation misses (bad record references, type mismatches)
+- `testRule` (type: `EXPRESSION_RULE` or `INTEGRATION`) executes with provided inputs and returns the result
 
-### Get before update
-Updates replace provided fields entirely. Get the current state first to understand what you're changing.
+### validateDesignObject vs validateExpression
+- `validateDesignObject` checks all expressions on a saved object (by UUID)
+- `validateExpression` validates a raw SAIL expression without saving — no `ri!` or record references available unless you provide bindings
 
-### Record type references
-When a parameter needs a record type reference (e.g., process variable type), use the `typeReference` string from `getRecordType`.
+## Error Patterns
 
-### Node type discovery
-Before configuring unfamiliar node types, call `getProcessModelNodeTypeSchema` with the node type ID to discover required inputs and outputs. Use the `referenceUuid` parameter to enrich the schema with context from a referenced object (e.g., integration inputs).
+- **Expression evaluation errors** on properties marked `isExpressionable` — you likely need to quote a literal string value: `'"my value"'` not `'my value'`
+- **409 Conflict** — object already exists or is already configured (record events)
+- **Validation errors after update** — check that renamed/removed inputs don't break `ri!` references in expressions
+- **Missing parent** — folders need `parentFolderUuid`, process models need PM folder UUID, documents need document folder UUID
