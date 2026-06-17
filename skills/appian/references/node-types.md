@@ -19,19 +19,7 @@ Gateway nodes support:
 
 ## Discovering Node Type Schemas
 
-```bash
-# List all available node types
-appian pm node-types list
-
-# Get inputs/outputs for a specific node type
-appian pm node-types get "internal3.write_records_to_source_23r3"
-
-# Get inputs for a User Input Task with a specific form
-appian pm node-types get "internal.17" --form $INTERFACE_UUID
-
-# Get inputs for a Call Integration node with a specific integration
-appian pm node-types get "internal3.integration" --reference $INTEGRATION_UUID
-```
+Use the node type discovery tools to list all available node types and get the input/output schema for a specific type. When working with attended nodes, provide the form interface UUID to discover form inputs. When working with integrations or subprocesses, provide the reference UUID for schema enrichment.
 
 Use this to discover the exact input names and required fields before configuring unfamiliar node types.
 
@@ -94,7 +82,7 @@ User Input Task (`internal.17`) — uses `forms` with interface reference:
 
 ### Schema-defined inputs pattern: `assignment` + `data.inputs`
 
-Write Records (`internal3.write_records_to_source_23r3`) — inputs discovered via `appian pm node-types get`:
+Write Records (`internal3.write_records_to_source_23r3`) — inputs discovered via the node type schema:
 
 ```json
 {
@@ -111,7 +99,7 @@ Write Records (`internal3.write_records_to_source_23r3`) — inputs discovered v
 }
 ```
 
-Note: `Records` wraps in curly braces to create a list. Discover input names with `appian pm node-types get`.
+Note: `Records` wraps in curly braces to create a list. Discover input names with the node type schema tool.
 
 ## Common Schema IDs
 
@@ -126,14 +114,14 @@ Note: `Records` wraps in curly braces to create a list. Discover input names wit
 | `internal3.sendemail3` | Send E-Mail |
 | `internal3.integration` | Call Integration |
 
-Use `appian pm node-types list` for the full catalog.
+Use the node type listing tool for the full catalog.
 
 ## Complete Example: Form → Cancel Check → Write
 
 ```json
 {
   "processVariables": [
-    {"name": "employee", "type": "<typeReference from appian rt get>", "isParameter": true},
+    {"name": "employee", "type": "<typeReference from record type details>", "isParameter": true},
     {"name": "cancel", "type": "Boolean", "isParameter": true}
   ],
   "nodes": [

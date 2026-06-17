@@ -1,30 +1,5 @@
 # Expression Rules
 
-## CLI Commands
-
-```bash
-# Create an expression rule
-echo '{"name":"CM_GetFullName","description":"Concatenates first and last name","inputs":[{"name":"firstName","type":"Text"},{"name":"lastName","type":"Text"}],"expression":"=ri!firstName & \" \" & ri!lastName"}' | appian er create --app $APP
-
-# Create from file
-appian er create --app $APP --file get-full-name.json
-
-# List expression rules
-appian er list --app $APP
-
-# Get expression rule details
-appian er get <uuid>
-
-# Update
-appian er get $UUID | jq '.expression = "=ri!firstName & \" \" & ri!lastName"' | appian er update $UUID
-
-# Execute/test a rule
-echo '{"inputs":{"firstName":"Jane","lastName":"Doe"}}' | appian er run <uuid>
-
-# Delete
-appian er delete <uuid>
-```
-
 ## Create JSON Schema
 
 ```json
@@ -75,7 +50,7 @@ Each input needs:
 - `type` — Appian type name: `Text`, `Number (Integer)`, `Number (Decimal)`, `Boolean`, `Date`, `Date and Time`, `Time`, `User`, `Group`
 - `description` (optional)
 
-For record type inputs, use the `typeReference` string from `appian rt get <uuid>`.
+For record type inputs, use the `typeReference` string from the record type's details (get the record type to find it).
 
 ## Expression Body
 

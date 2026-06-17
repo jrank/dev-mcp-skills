@@ -6,27 +6,6 @@ These utility objects support all other Appian design objects. They are created 
 
 ## Constants
 
-### CLI Commands
-
-```bash
-# Create a constant
-echo '{"name":"CM_ADMIN_GROUP","type":"GROUP","value":"CM Administrators"}' | appian constants create --app $APP
-
-# List constants
-appian constants list --app $APP
-
-# Get a constant
-appian constants get <uuid>
-
-# Update
-appian constants get $UUID | jq '.value = "new-value"' | appian constants update $UUID
-
-# Delete
-appian constants delete <uuid>
-```
-
-Note: The CLI resource name for constants depends on CLI implementation. If `constants` is not a top-level resource, constants may be managed through a general objects command or via the application objects listing.
-
 ### Create JSON
 
 ```json
@@ -80,21 +59,6 @@ cons!CM_DEFAULT_SLA_DAYS    /* INTEGER: 5 */
 
 ## Groups
 
-### CLI Commands
-
-```bash
-# Create a group
-echo '{"name":"CM Case Managers","parentGroupName":"CM Users","description":"Users who manage cases"}' | appian groups create --app $APP
-
-# List groups
-appian groups list --app $APP
-
-# Get a group
-appian groups get "CM Administrators"
-```
-
-Note: Group CLI commands may vary. Check `appian groups --help` or equivalent.
-
 ### Application Default Groups
 
 Creating an application auto-generates:
@@ -123,27 +87,6 @@ Each group needs:
 
 ## Folders
 
-### CLI Commands
-
-```bash
-# List folders (discover defaults)
-appian folders list --app $APP
-
-# Create a sub-folder
-echo '{"name":"Templates","parentFolderUuid":"<knowledge-center-uuid>"}' | appian folders create --app $APP
-
-# Get folder
-appian folders get <uuid>
-
-# List folder contents
-appian folders contents <uuid>
-
-# Delete
-appian folders delete <uuid>
-```
-
-Note: Folder CLI commands may vary by implementation.
-
 ### Folder Types
 - **Rule folders** — expression rules, interfaces, constants
 - **Document folders (Knowledge Centers)** — documents and sub-folders
@@ -156,7 +99,7 @@ App creation auto-generates:
 - Document folder / Knowledge Center
 - Process model folder
 
-Discover them: `appian folders list --app $APP`
+Discover them by listing folders scoped to the application.
 
 ### When to Create Additional Folders
 - Sub-folders under Knowledge Center (Templates, Reports, Attachments)
@@ -167,30 +110,6 @@ Every folder requires `parentFolderUuid` — no top-level creation without a par
 ---
 
 ## Documents
-
-### CLI Commands
-
-```bash
-# Upload a document
-echo '{"name":"template.xlsx","parentFolderUuid":"<folder-uuid>","content":"<file-content>"}' | appian documents upload --app $APP
-
-# List documents
-appian documents list --app $APP
-
-# Get document metadata
-appian documents get <uuid>
-
-# Get document text content
-appian documents text <uuid>
-
-# Replace content
-echo '{"content":"new content here"}' | appian documents replace <uuid>
-
-# Delete
-appian documents delete <uuid>
-```
-
-Note: Document CLI commands may vary.
 
 ### Upload Requirements
 - `name` — include extension (e.g., `report.pdf`, max 255 chars)

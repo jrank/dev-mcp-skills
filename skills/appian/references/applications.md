@@ -1,23 +1,5 @@
 # Applications
 
-## CLI Commands
-
-```bash
-# Create an application
-echo '{"name":"Case Management"}' | appian apps create
-echo '{"name":"Case Management","prefix":"CM","description":"Manages support cases"}' | appian apps create
-
-# List applications
-appian apps list
-appian apps list | jq '.[] | select(.name | contains("Case"))'
-
-# Get application details
-appian apps get <uuid>
-
-# Delete an application (removes container only, objects preserved)
-appian apps delete <uuid>
-```
-
 ## Create JSON Schema
 
 ```json
@@ -39,21 +21,11 @@ Creating an application auto-generates:
 - **PREFIX Users** group — all end users (includes Administrators as members)
 - Default rule folder, document folder (Knowledge Center), and process model folder
 
-Use `--format uuids` to capture the app UUID for subsequent commands:
-```bash
-APP=$(echo '{"name":"Case Management","prefix":"CM"}' | appian apps create --format uuids)
-```
+Capture the application UUID from the create response for use in subsequent operations.
 
 ## Discovery After Creation
 
-After creating an app, discover its auto-generated objects:
-```bash
-# Find the process model folder (needed for PM creation)
-appian pm list --app $APP  # shows the PM folder context
-
-# Find groups
-appian apps get $APP | jq '.defaultObjects'
-```
+After creating an app, discover its auto-generated objects by getting the application details. Look for the `defaultObjects` field which contains UUIDs for the auto-generated groups, folders, and process model folder.
 
 ## Application Prefix Convention
 

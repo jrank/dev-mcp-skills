@@ -17,22 +17,7 @@ Do **not** configure record events on lookup/reference record types (Regions, St
 
 ---
 
-## CLI Commands
-
-```bash
-# Configure record events on a record type (one-time setup)
-# Generates: Event History, Event Type Lookup, Reply Thread, and Subscriber record types
-echo '{"eventTypes":["Created Order","Reviewed Order","Approved Order","Shipped Order"]}' \
-  | appian rt events configure $RT_UUID --app $APP
-
-# Configure without custom event types (uses defaults: Created, Updated, Commented On)
-appian rt events configure $RT_UUID --app $APP
-
-# Get the record events configuration
-appian rt events get $RT_UUID
-```
-
-### Configure JSON Schema
+## Configure JSON Schema
 
 ```json
 {
@@ -168,8 +153,7 @@ Events are written via the **Write Records** smart service node (`internal3.writ
 
 ### Example: Write Records node with events in a process model
 
-```bash
-cat << 'EOF' | appian pm update $PM_UUID
+```json
 {
   "nodes": [
     {"id": 1, "type": "core.0", "name": "Start", "coordinates": [50, 200], "connections": [2]},
@@ -197,21 +181,14 @@ cat << 'EOF' | appian pm update $PM_UUID
     {"id": 3, "type": "core.1", "name": "End", "coordinates": [450, 200], "connections": []}
   ]
 }
-EOF
 ```
 
 ### Finding event type IDs
 
-Event type IDs are stored in the Event Type Lookup record type. Query them:
-
-```bash
-# Get the event type lookup RT UUID from the events config
-CONFIG=$(appian rt events get $RT_UUID)
-LOOKUP_UUID=$(echo $CONFIG | jq -r '.eventTypeLookupRecordTypeUuid')
-
-# List the event type IDs and values
-appian records list $LOOKUP_UUID
-```
+Event type IDs are stored in the Event Type Lookup record type. To find them:
+1. Get the record events configuration for your record type
+2. Extract the `eventTypeLookupRecordTypeUuid` from the response
+3. List the record data on that lookup record type to see event type IDs and values
 
 ### Conditional event capture
 
@@ -427,55 +404,29 @@ Record events provide the foundation for process mining in Process HQ. The gener
 
 ### Pattern: Configure events on a new record type
 
-```bash
-# 1. Create the base record type
-RT_UUID=$(cat << 'EOF' | appian rt create --app $APP --format uuids
+1. Create the base record type with fields
+2. Configure record events with business lifecycle event types:
+```json
 {
-  "name": "CM Case",
-  "pluralName": "Cases",
-  "sourceType": "DATABASE",
-  "createTable": true,
-  "fields": [
-    {"fieldName": "id", "fieldType": "INTEGER", "isPrimaryKey": true},
-    {"fieldName": "title", "fieldType": "TEXT", "length": 255},
-    {"fieldName": "status", "fieldType": "TEXT", "length": 50},
-    {"fieldName": "assignee", "fieldType": "TEXT", "length": 255}
-  ]
+  "eventTypes": ["Created Case", "Assigned Case", "Reviewed Case", "Escalated Case", "Resolved Case", "Closed Case"]
 }
-EOF
-)
-
-# 2. Configure record events with business lifecycle event types
-echo '{"eventTypes":["Created Case","Assigned Case","Reviewed Case","Escalated Case","Resolved Case","Closed Case"]}' \
-  | appian rt events configure $RT_UUID --app $APP
 ```
 
 ### Pattern: Check existing events configuration
 
-```bash
-# Get the full events configuration with field/relationship UUIDs
-appian rt events get $RT_UUID
-```
+Get the record events configuration for the record type. The response includes all field UUIDs, relationship UUIDs, and event type definitions you need for subsequent operations.
 
 ### Pattern: Add event types after initial configuration
 
 Event types are stored in the Event Type Lookup record type. To add new event types, insert records into that table:
-
-```bash
-# Get the event type lookup RT UUID from the events config
-CONFIG=$(appian rt events get $RT_UUID)
-LOOKUP_UUID=$(echo $CONFIG | jq -r '.eventTypeLookupRecordTypeUuid')
-
-# Insert a new event type
-echo "value
-Reopened Case" | appian records insert $LOOKUP_UUID
-```
+1. Get the events configuration to find `eventTypeLookupRecordTypeUuid`
+2. Insert new rows into the lookup record type using CSV format (column: `value`)
 
 ---
 
 ## Pitfalls
 
-- **409 Conflict** — `configureRecordEvents` returns 409 if events are already configured. Use `appian rt events get` to check first.
+- **409 Conflict** — `configureRecordEvents` returns 409 if events are already configured. Check the existing configuration first.
 - **Event types should be lifecycle-oriented** — avoid generic "Updated" events; instead track specific business actions
 - **One record type per Write Records node** — you cannot write events for multiple record types in a single Write Records node
 - **a!writeRecords() does not write events** — only the Write Records node in process models supports event writing

@@ -1,24 +1,5 @@
 # Sites
 
-## CLI Commands
-
-```bash
-# Create a site
-appian sites create --app $APP --file case-site.json
-
-# List sites
-appian sites list --app $APP
-
-# Get site details
-appian sites get <uuid>
-
-# Update a site (pages array is full replacement)
-appian sites get $UUID | jq '.pages += [{"name":"Admin","targetUuid":"<iface-uuid>"}]' | appian sites update $UUID
-
-# Delete
-appian sites delete <uuid>
-```
-
 ## Create JSON Schema
 
 ```json
@@ -95,12 +76,7 @@ Groups and group constants must exist before site creation (the expressions refe
 
 ## Updating Sites
 
-**Pages array is full replacement** — always include all existing pages when updating.
-
-```bash
-# Add a page to existing site
-appian sites get $UUID | jq '.pages += [{"name":"Reports","targetUuid":"<uuid>"}]' | appian sites update $UUID
-```
+**Pages array is full replacement** — always include all existing pages when updating. Get the current site, add/modify pages in the array, then update with the complete pages list.
 
 ## Dependency Position
 
@@ -113,4 +89,4 @@ Sites come late — after interfaces. Interfaces referenced by `targetUuid` must
 - **Interface doesn't exist** — referenced interface must be created first
 - **Web address conflicts** — must be unique across environment
 - **Visibility references missing constants** — create groups/constants before site
-- **Not associating with application** — use `--app $APP` for default security
+- **Not associating with application** — always scope to application for default security

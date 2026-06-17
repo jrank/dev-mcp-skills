@@ -11,22 +11,6 @@ Add user filters when requirements mention:
 
 User filters are step 10 in the dependency order — add them after record type fields and relationships exist, since `sourceRef` requires a field UUID.
 
-## CLI Commands
-
-```bash
-# List existing filters
-appian rt filters list <rt-uuid>
-
-# Add a filter (JSON via stdin or --file)
-echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"<field-uuid>"}' | appian rt filters add <rt-uuid>
-
-# Update a filter
-echo '{"name":"Updated Name"}' | appian rt filters update <rt-uuid> <filter-uuid>
-
-# Delete a filter
-appian rt filters delete <rt-uuid> <filter-uuid>
-```
-
 ## Filter Types
 
 | facetType | Use for | How it works |
@@ -62,19 +46,25 @@ Creates a dropdown populated with distinct values from the referenced field.
 
 ### Examples
 
-```bash
-# Simple list filter on a direct field
-echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"'$STATUS_FIELD_UUID'"}' | appian rt filters add $RT_UUID
+**Simple list filter on a direct field:**
+```json
+{
+  "name": "Status",
+  "facetType": "LIST_OF_VALUES",
+  "sourceRef": "<status-field-uuid>"
+}
+```
 
-# Filter on a related record field (e.g., Organization name via relationship)
-echo '{
+**Filter on a related record field (e.g., Organization name via relationship):**
+```json
+{
   "name": "Organization",
   "facetType": "LIST_OF_VALUES",
-  "sourceRef": "'$REL_UUID'/'$ORG_NAME_FIELD_UUID'",
+  "sourceRef": "<relationship-uuid>/<org-name-field-uuid>",
   "useRelatedRecordValues": true,
-  "relatedRecordDisplayField": "'$ORG_NAME_FIELD_UUID'",
+  "relatedRecordDisplayField": "<org-name-field-uuid>",
   "relatedRecordSort": "ASCENDING"
-}' | appian rt filters add $RT_UUID
+}
 ```
 
 ### Related Record Filters
@@ -119,12 +109,17 @@ Creates a from/to date picker that filters records within a date window.
 
 ### Examples
 
-```bash
-# Date range filter on a datetime field
-echo '{"name":"Created Date","facetType":"DATE_RANGE","sourceRef":"'$CREATED_AT_UUID'"}' | appian rt filters add $RT_UUID
+**Date range filter on a datetime field:**
+```json
+{
+  "name": "Created Date",
+  "facetType": "DATE_RANGE",
+  "sourceRef": "<created-at-field-uuid>"
+}
+```
 
-# With default date range (last 30 days)
-cat << 'EOF' | appian rt filters add $RT_UUID
+**With default date range (last 30 days):**
+```json
 {
   "name": "Submitted Date",
   "facetType": "DATE_RANGE",
@@ -132,7 +127,6 @@ cat << 'EOF' | appian rt filters add $RT_UUID
   "startDateExpression": "=today() - 30",
   "endDateExpression": "=today()"
 }
-EOF
 ```
 
 ---
@@ -186,36 +180,30 @@ a!recordFilterList(
 ### Examples
 
 **Status bucket filter with custom grouping:**
-```bash
-cat << 'EOF' | appian rt filters add $RT_UUID
+```json
 {
   "name": "Status Group",
   "facetType": "EXPRESSION",
   "expression": "=a!recordFilterList(name: \"Status\", options: {a!recordFilterListOption(id: 1, name: \"Open\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Submission.fields.{fid}status', operator: \"in\", value: {\"New\", \"In Progress\", \"Under Review\"})), a!recordFilterListOption(id: 2, name: \"Closed\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Submission.fields.{fid}status', operator: \"in\", value: {\"Approved\", \"Rejected\", \"Cancelled\"}))})"
 }
-EOF
 ```
 
 **Numeric range buckets (e.g., salary bands):**
-```bash
-cat << 'EOF' | appian rt filters add $RT_UUID
+```json
 {
   "name": "Amount Range",
   "facetType": "EXPRESSION",
   "expression": "=a!recordFilterList(name: \"Amount\", options: {a!recordFilterListOption(id: 1, name: \"Under $1,000\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Order.fields.{fid}amount', operator: \"<\", value: 1000)), a!recordFilterListOption(id: 2, name: \"$1,000 - $10,000\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Order.fields.{fid}amount', operator: \"between\", value: {1000, 10000})), a!recordFilterListOption(id: 3, name: \"Over $10,000\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Order.fields.{fid}amount', operator: \">\", value: 10000))})"
 }
-EOF
 ```
 
 **Boolean field as friendly labels:**
-```bash
-cat << 'EOF' | appian rt filters add $RT_UUID
+```json
 {
   "name": "Active Status",
   "facetType": "EXPRESSION",
   "expression": "=a!recordFilterList(name: \"Active\", options: {a!recordFilterListOption(id: 1, name: \"Active\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Employee.fields.{fid}isActive', operator: \"=\", value: true)), a!recordFilterListOption(id: 2, name: \"Inactive\", filter: a!queryFilter(field: 'recordType!{rt-uuid}Employee.fields.{fid}isActive', operator: \"=\", value: false))})"
 }
-EOF
 ```
 
 ### When to Use EXPRESSION vs LIST_OF_VALUES
@@ -235,20 +223,12 @@ Prefer `LIST_OF_VALUES` and `DATE_RANGE` when possible — they're simpler, auto
 
 ## Common Workflow
 
-```bash
-# 1. Get field UUIDs
-appian rt fields list $RT_UUID | jq '.[] | {fieldName, uuid}'
-
-# 2. Add filters based on field types
-# Text/status fields → LIST_OF_VALUES
-echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"'$STATUS_UUID'"}' | appian rt filters add $RT_UUID
-
-# Date fields → DATE_RANGE
-echo '{"name":"Created Date","facetType":"DATE_RANGE","sourceRef":"'$CREATED_UUID'"}' | appian rt filters add $RT_UUID
-
-# 3. Verify
-appian rt filters list $RT_UUID
-```
+1. **Get field UUIDs** — list the record type's fields to find the UUIDs you need for `sourceRef`
+2. **Add filters based on field types:**
+   - Text/status fields → `LIST_OF_VALUES`
+   - Date/datetime fields → `DATE_RANGE`
+   - Custom bucketing → `EXPRESSION`
+3. **Verify** — list filters on the record type to confirm they were created correctly
 
 ## Design Guidance
 

@@ -1,44 +1,12 @@
 # Process Models
 
-## CLI Commands
-
-```bash
-# Create a process model
-appian pm create --app $APP --file create-employee-pm.json
-
-# List process models
-appian pm list --app $APP
-
-# Get process model details (includes nodes, variables, start form)
-appian pm get <uuid>
-
-# Update a process model (nodes, variables, connections, start form)
-appian pm update <uuid> --file updated-pm.json
-
-# Delete
-appian pm delete <uuid>
-
-# Run a process model (unattended only) and get results
-echo '{"inputs":{"caseRecord":...}}' | appian pm run <uuid>
-
-# List nodes in a process model
-appian pm nodes list <uuid>
-
-# Discover node types and their input schemas
-appian pm node-types list
-appian pm node-types get "internal3.write_records_to_source_23r3"
-appian pm node-types get "internal.17" --form $INTERFACE_UUID
-```
-
-Note: Creating a process model requires `--app $APP` (to associate with the application), `parentFolderUuid` (a PM folder, not a regular folder), and `errorAlertGroupName`. Discover the PM folder from `appian apps get $APP` (look at `defaultObjects.processModelFolderUuid`). Use the application's administrators group for `errorAlertGroupName`.
-
 ## Update JSON Schema
 
 ```json
 {
   "description": "Creates a new case record from the submitted form",
   "processVariables": [
-    {"name": "record", "type": "<typeReference from appian rt get>", "isParameter": true, "isRequired": false},
+    {"name": "record", "type": "<typeReference from record type details>", "isParameter": true, "isRequired": false},
     {"name": "isUpdate", "type": "BOOLEAN", "isParameter": true},
     {"name": "cancel", "type": "BOOLEAN", "isParameter": true}
   ],
@@ -71,8 +39,8 @@ Note: Creating a process model requires `--app $APP` (to associate with the appl
 Every process model needs:
 - `name` — follows naming conventions
 - `description` — what it does and when it runs
-- `parentFolderUuid` — a process model folder (not a regular folder)
-- `securityGroupName` — group controlling access (typically PREFIX Administrators)
+- `parentFolderUuid` — a process model folder (not a regular folder). Discover from the application's `defaultObjects.processModelFolderUuid`.
+- `errorAlertGroupName` — group controlling error alerts (typically PREFIX Administrators)
 
 ## Nodes and Flow
 
@@ -139,7 +107,7 @@ Start(1) → Script(2) → UserInput(3) → WriteRecords(4) → End(5)
 
 Each variable:
 - `name` — camelCase (`caseRecord`, `isApproved`)
-- `type` — built-in: Text, Number (Integer), Number (Decimal), Boolean, Date, Time, Date and Time, User, Group, Document, Folder. For record types: use the `typeReference` string from `appian rt get <uuid>`
+- `type` — built-in: Text, Number (Integer), Number (Decimal), Boolean, Date, Time, Date and Time, User, Group, Document, Folder. For record types: use the `typeReference` string from the record type's details
 - `isParameter` (optional) — `true` = visible to callers
 - `isRequired` (optional) — callers must provide
 
@@ -148,7 +116,7 @@ Each variable:
 ### Common Variable Patterns
 
 **Record create/update:**
-- `record` (type: typeReference from `appian rt get`, isParameter: true)
+- `record` (type: typeReference from record type details, isParameter: true)
 - `isUpdate` (BOOLEAN, isParameter: true)
 - `cancel` (BOOLEAN)
 
@@ -184,15 +152,7 @@ Connect an interface as a start form using `startForm`:
 
 ## Updating Process Models
 
-**Always get before update** — node/variable lists replace entirely.
-
-```bash
-# Get current state
-appian pm get $UUID > current.json
-
-# Modify and update
-cat current.json | jq '.nodes += [{"id":6,"type":"internal.16","name":"Log","coordinates":[300,200],"connections":[5]}]' | appian pm update $UUID
-```
+**Always get before update** — node/variable lists replace entirely. Get the current state, modify what you need, then update with the full payload.
 
 ## Common Pitfalls
 

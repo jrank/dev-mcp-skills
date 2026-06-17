@@ -1,75 +1,5 @@
 # Record Types
 
-## CLI Commands
-
-```bash
-# Create a record type
-appian rt create --app $APP --file case.json
-
-# List record types in an application
-appian rt list --app $APP
-
-# Get record type details (includes fields, source config, typeReference)
-appian rt get <uuid>
-
-# Update a record type
-appian rt get $UUID | jq '.description = "Updated"' | appian rt update $UUID
-
-# Delete a record type
-appian rt delete <uuid>
-
-# List fields
-appian rt fields list <uuid>
-
-# Add a field
-echo '{"fieldName":"status","fieldType":"TEXT","length":50}' | appian rt fields add <uuid>
-
-# List relationships
-appian rt relationships list <uuid>
-
-# Add a relationship
-echo '{"relationshipName":"department","relationshipType":"MANY_TO_ONE","sourceRecordTypeFieldUuid":"<fk-field-uuid>","targetRecordTypeFieldUuid":"<pk-field-uuid>","targetRecordTypeUuid":"<target-rt-uuid>"}' | appian rt relationships add <rt-uuid>
-
-# Insert record data (CSV via stdin or --file, PK column optional for auto-increment)
-echo "value
-Engineering
-Finance
-Sales" | appian records insert <rt-uuid>
-
-# List record data
-appian records list <rt-uuid>
-
-# List views
-appian rt views list <uuid>
-
-# List actions
-appian rt actions list <uuid>
-
-# Add a record action (LIST_ACTION — appears on the record list)
-echo '{"displayName":"Create Submission","processModelUuid":"<pm-uuid>","actionType":"LIST_ACTION","key":"createSubmission"}' | appian rt actions add <rt-uuid>
-
-# Add a record action (RELATED_ACTION — appears on a record view row)
-echo '{"displayName":"Edit Submission","processModelUuid":"<pm-uuid>","actionType":"RELATED_ACTION","key":"editSubmission","contextExpr":"=a!toJson(rv!record)","visibilityExpr":"=loggedInUser() = rv!record['"'"'recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername'"'"']"}' | appian rt actions add <rt-uuid>
-
-# Update an action
-appian rt actions update <rt-uuid> <action-uuid> --file /tmp/action-update.json
-
-# Delete an action
-appian rt actions delete <rt-uuid> <action-uuid>
-
-# List user filters
-appian rt filters list <uuid>
-
-# Add a user filter
-echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"<field-uuid>"}' | appian rt filters add <rt-uuid>
-
-# Update a user filter
-echo '{"name":"Updated Name"}' | appian rt filters update <rt-uuid> <filter-uuid>
-
-# Delete a user filter
-appian rt filters delete <rt-uuid> <filter-uuid>
-```
-
 ## Create JSON Schema
 
 ```json
@@ -142,15 +72,16 @@ Order: primary key → business fields → foreign keys → audit fields.
 
 Relationships require both record types to exist first. Add them after creating all record types.
 
-```bash
-# Add a relationship (JSON via stdin)
-echo '{
+### Relationship JSON Schema
+
+```json
+{
   "relationshipName": "customer",
   "sourceRecordTypeFieldUuid": "<fk-field-uuid>",
   "targetRecordTypeFieldUuid": "<pk-field-uuid>",
   "targetRecordTypeUuid": "<target-rt-uuid>",
   "relationshipType": "MANY_TO_ONE"
-}' | appian rt relationships add <source-rt-uuid>
+}
 ```
 
 ### Bidirectional Requirement
@@ -178,15 +109,7 @@ A one-sided relationship breaks record type traversal.
 
 ## Updating Record Types
 
-**Always get before update** — updates replace provided fields entirely.
-
-```bash
-# Add a field to existing RT
-echo '{"fieldName":"priority","fieldType":"INTEGER"}' | appian rt fields add $RT_UUID
-
-# Update RT metadata
-appian rt get $UUID | jq '.description = "New desc"' | appian rt update $UUID
-```
+**Always get before update** — updates replace provided fields entirely. Get the current state, modify what you need, then update.
 
 ## Record Actions
 
@@ -262,36 +185,40 @@ The process model needs a parameter named `record` typed to the record type's `t
 
 ### Examples
 
-```bash
-# LIST_ACTION — create new (no visibility restriction needed)
-echo '{
+**LIST_ACTION — create new (no visibility restriction needed):**
+```json
+{
   "displayName": "New Submission",
-  "processModelUuid": "'$CREATE_PM_UUID'",
+  "processModelUuid": "<create-pm-uuid>",
   "actionType": "LIST_ACTION",
   "key": "createSubmission",
   "icon": "f067"
-}' | appian rt actions add $RT_UUID
+}
+```
 
-# RELATED_ACTION — edit, restricted to record owner
-echo '{
+**RELATED_ACTION — edit, restricted to record owner:**
+```json
+{
   "displayName": "Edit Submission",
-  "processModelUuid": "'$UPDATE_PM_UUID'",
+  "processModelUuid": "<update-pm-uuid>",
   "actionType": "RELATED_ACTION",
   "key": "editSubmission",
   "contextExpr": "={record: rv!record}",
-  "visibilityExpr": "=loggedInUser() = rv!record['"'"'recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername'"'"']",
+  "visibilityExpr": "=loggedInUser() = rv!record['recordType!{rt-uuid}Submission.fields.{fid}submittedByUsername']",
   "icon": "f044"
-}' | appian rt actions add $RT_UUID
+}
+```
 
-# RELATED_ACTION — delete, restricted to admins
-echo '{
+**RELATED_ACTION — delete, restricted to admins:**
+```json
+{
   "displayName": "Delete",
-  "processModelUuid": "'$DELETE_PM_UUID'",
+  "processModelUuid": "<delete-pm-uuid>",
   "actionType": "RELATED_ACTION",
   "key": "deleteSubmission",
   "visibilityExpr": "=a!isUserMemberOfGroup(loggedInUser(), cons!MY_ADMIN_GROUP)",
   "icon": "f1f8"
-}' | appian rt actions add $RT_UUID
+}
 ```
 
 ### Design Guidance
@@ -300,21 +227,12 @@ echo '{
 - **RELATED_ACTION** (edit/update): restrict to record owner via `visibilityExpr` comparing `loggedInUser()` to the owner/submitter field
 - **RELATED_ACTION** (delete): restrict to admins or record owner
 - Always set `contextExpr` on RELATED_ACTION to pass the record into the process model
-- Use heredoc (`cat << 'EOF'`) for complex visibility expressions to avoid shell escaping issues
 - The `key` must be unique within the record type and is used in SAIL references
 - RELATED_ACTIONs auto-surface only on record views, NOT on custom `a!gridField` grids. When adding a RELATED_ACTION (e.g., Edit), also update any dashboard interface that displays that record type in a custom grid — add `recordActions` to the grid or a link column using `a!recordActionField()` to surface the action on each row.
 
 ## User Filters
 
 User filters let end users filter the record list via dropdowns or date pickers. Three types: `LIST_OF_VALUES`, `DATE_RANGE`, `EXPRESSION`.
-
-```bash
-# Add a filter
-echo '{"name":"Status","facetType":"LIST_OF_VALUES","sourceRef":"<field-uuid>"}' | appian rt filters add <rt-uuid>
-
-# List existing filters
-appian rt filters list <rt-uuid>
-```
 
 Add filters after record type fields and relationships exist (step 10 in dependency order). Load `references/record-type-user-filters.md` for full schemas, EXPRESSION filter examples, related record filtering, and design guidance.
 
@@ -326,4 +244,4 @@ Add filters after record type fields and relationships exist (step 10 in depende
 - **Missing `createTable: true`** — without it, Appian expects table to already exist
 - **Wrong field type names** — case-sensitive: TEXT, INTEGER, DATETIME (not text, integer)
 - **Audit fields on junction/reference tables** — only entity tables get audit fields
-- **Not discovering existing RTs** — always `appian rt list --app $APP` to check what exists and get dataSourceUuid/schema from existing RTs
+- **Not discovering existing RTs** — always list record types in the app to check what exists and get dataSourceUuid/schema from existing RTs

@@ -1,30 +1,5 @@
 # Interfaces
 
-## CLI Commands
-
-```bash
-# Create an interface
-echo '{"name":"CM_Dashboard","description":"Main dashboard"}' | appian interfaces create --app $APP
-
-# Create with inputs and expression in one call
-appian interfaces create --app $APP --file dashboard.json
-
-# List interfaces
-appian interfaces list --app $APP
-
-# Get interface details (includes inputs, expression)
-appian interfaces get <uuid>
-
-# Update an interface
-appian interfaces get $UUID | jq '.expression = "=a!textField(label: \"Updated\")"' | appian interfaces update $UUID
-
-# Test-render an interface
-echo '{"inputs":{"record":null}}' | appian interfaces run <uuid>
-
-# Delete
-appian interfaces delete <uuid>
-```
-
 ## Create JSON Schema
 
 ```json
@@ -96,7 +71,7 @@ Usually none. Dashboards query their own data.
 
 For built-in types, use the friendly name: `Text`, `Number (Integer)`, `Number (Decimal)`, `Boolean`, `Date`, `Date and Time`, `Time`, `User`, `Group`, `Document`, `Folder`, `Encrypted Text`, `Map`
 
-For record type inputs, use the `typeReference` string from `appian rt get <uuid>`.
+For record type inputs, use the `typeReference` string from the record type's details (get the record type to find it).
 
 ## Operation Sequence
 
@@ -105,9 +80,9 @@ For record type inputs, use the `typeReference` string from `appian rt get <uuid
 2. The expression can reference inputs via `ri!` prefix matching input names
 
 **Updating an existing interface:**
-1. `appian interfaces get $UUID` — see current state
+1. Get the interface to see current state
 2. Modify inputs or expression as needed
-3. `appian interfaces update $UUID --file updated.json`
+3. Update with the modified payload
 
 If changing inputs, ensure the expression still references correct `ri!` names.
 
