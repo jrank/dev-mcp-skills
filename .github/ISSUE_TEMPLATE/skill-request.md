@@ -1,6 +1,6 @@
 ---
-name: Skill request
-about: Suggest a new skill or addition to an existing one
+name: Skill improvement
+about: Suggest an addition or fix to the Appian skill
 labels: enhancement
 ---
 
@@ -12,6 +12,6 @@ labels: enhancement
 
 <!-- What pattern, constraint, or gotcha should the AI know? -->
 
-## Which skill should it go in?
+## Which reference file should it go in?
 
-<!-- Existing skill name, or "new skill: appian-<topic>" -->
+<!-- e.g., references/record-types.md, references/data-modeling.md, or "new reference needed" -->

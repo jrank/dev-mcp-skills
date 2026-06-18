@@ -5,7 +5,7 @@ We welcome contributions from anyone building with Appian and AI coding assistan
 ## How to Contribute
 
 1. **Fork** this repository
-2. **Create a branch** in your fork (`git checkout -b my-skill-improvement`)
+2. **Create a branch** in your fork (`git checkout -b my-improvement`)
 3. **Make your changes** (see guidelines below)
 4. **Commit with DCO sign-off** (see below)
 5. **Open a Pull Request** against `main`
@@ -14,7 +14,7 @@ We welcome contributions from anyone building with Appian and AI coding assistan
 
 ### Evidence of impact
 
-Every skill change should address a real failure mode. In your PR description, include:
+Every change should address a real failure mode. In your PR description, include:
 
 - **What went wrong** — describe the error, retry loop, or incorrect output the AI produced
 - **Why** — what knowledge was the AI missing?
@@ -25,42 +25,37 @@ You don't need to provide formal metrics, but "I hit this problem, added this co
 ### Scope
 
 - **One concern per PR** — don't bundle unrelated fixes
-- **Fold small additions into existing skills** — if your contribution is <30 lines and closely related to an existing skill's topic, add it there rather than creating a new file
-- **Create a new skill** when the content is >50 lines or covers a distinct concern not addressed by existing skills
+- **Add to existing reference files** — most contributions improve an existing reference (e.g., adding a pitfall to `references/record-types.md`)
+- **New reference files** are rare — only when a topic is substantial enough to warrant its own file and doesn't fit in any existing reference
 
 ### Quality
 
 - Write for an AI audience — be precise and explicit, not conversational
-- Include correct code examples where applicable
+- Stay tool-agnostic — describe what to do, not which tool to call (no MCP tool names or CLI commands in reference content)
+- Include concrete examples where applicable
 - State what NOT to do when there's a common wrong approach
-- Use the existing skills as style examples
+- Use the existing reference files as style examples
 
-## Skill File Format
+## File Structure
 
 ```
-skills/appian-<topic>/
-  SKILL.md
-  references/       (optional)
-    *.md
+skills/appian/
+  SKILL.md              ← Entry point (description, reference map, dependency order)
+  references/
+    tools-mcp.md        ← MCP tool patterns and non-obvious behaviors
+    record-types.md     ← Record type schemas, fields, relationships
+    data-modeling.md    ← Entity design, normalization, naming conventions
+    ...                 ← Additional reference files
 ```
 
-`SKILL.md` must have YAML frontmatter:
-
-```yaml
----
-name: "appian-<topic>"
-description: "One sentence describing when the AI should load this skill."
----
-```
-
-The description is critical — it's how the AI decides whether to load the skill for a given task. Make it specific about the use case, not generic.
+`SKILL.md` has the resource reference map that tells the AI which file to load for a given task. If you add a new reference file, add a corresponding row to the map.
 
 ## DCO Sign-Off
 
 This project uses the [Developer Certificate of Origin](https://developercertificate.org/) (DCO). You must sign off every commit to certify you have the right to submit it:
 
 ```bash
-git commit -s -m "Add grid filtering quirk to appian-sail"
+git commit -s -m "Add grid filtering quirk to references/sail.md"
 ```
 
 This adds a `Signed-off-by: Your Name <your@email.com>` line. If you forget, amend:
@@ -74,16 +69,15 @@ All commits in a PR must have sign-off or the PR cannot be merged.
 ## Review Process
 
 1. A maintainer will review your PR, usually within a few business days
-2. We may ask for evidence of the failure mode or suggest folding content into a different skill
+2. We may ask for evidence of the failure mode or suggest a different reference file
 3. Once approved, we'll squash-merge to keep `main` history clean
-4. Your contribution will be attributed in the squash commit message
 
 ## Reporting Issues
 
-If you find a skill that teaches something **incorrect** (causes failures rather than preventing them), open an issue with:
+If a reference teaches something **incorrect** (causes failures rather than preventing them), open an issue with:
 
-- Which skill and which section
-- What the skill says vs. what actually works
+- Which reference file and which section
+- What it says vs. what actually works
 - Your Appian version (if relevant)
 
 ## Code of Conduct
